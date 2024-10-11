@@ -1,1 +1,0 @@
-enum TripServiceErrorType { userNotLoggedIn }
