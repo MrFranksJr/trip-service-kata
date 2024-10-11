@@ -13,12 +13,10 @@ import org.junit.jupiter.api.assertThrows
 
 class TripServiceTest {
     private lateinit var tripService: TripService
-    private val guestUser: User = User()
-    private var friendUser: User = User()
-    private val loggedInUser: User = User()
+    private val loggedInUser: User = User.Builder().build()
+    private val notLoggedInUser: User = User.Builder().build()
     private val tripToGreece = Trip()
     private val tripToJapan = Trip()
-    private val tripList: List<Trip> = listOf(tripToGreece, tripToJapan)
 
     @BeforeEach
     fun init() {
@@ -31,7 +29,7 @@ class TripServiceTest {
     fun `should throw UserNotLoggedInException when user is not logged in`() {
         every { UserSession.instance.loggedUser } returns null
 
-        assertThrows<UserNotLoggedInException> { tripService.getTripsByUser(guestUser) }
+        assertThrows<UserNotLoggedInException> { tripService.getTripsByUser(notLoggedInUser) }
     }
 
     @Test
@@ -39,7 +37,9 @@ class TripServiceTest {
         every { UserSession.instance.loggedUser } returns loggedInUser
         every { TripDAO.findTripsByUser(any()) } returns emptyList()
 
-        friendUser.addTrip(Trip())
+        val friendUser = User.Builder()
+            .withTrips(tripToJapan)
+            .build()
 
         assertTrue { tripService.getTripsByUser(friendUser).isEmpty() }
     }
@@ -47,13 +47,14 @@ class TripServiceTest {
     @Test
     fun `should return all trips when users are friends`() {
         every { UserSession.instance.loggedUser } returns loggedInUser
-        every { TripDAO.findTripsByUser(any()) } returns tripList
+        every { TripDAO.findTripsByUser(any()) } returns listOf(tripToGreece, tripToJapan)
 
-        friendUser.addFriend(loggedInUser)
-        friendUser.addTrip(tripToJapan)
-        friendUser.addTrip(tripToGreece)
+        val friendUser = User.Builder()
+            .friendsWith(loggedInUser)
+            .withTrips(tripToJapan, tripToGreece)
+            .build()
 
-        assertEquals(2,tripService.getTripsByUser(friendUser).size)
-        assertTrue { tripService.getTripsByUser(friendUser).containsAll(tripList) }
+        assertEquals(2, tripService.getTripsByUser(friendUser).size)
+        assertTrue { tripService.getTripsByUser(friendUser).containsAll(listOf(tripToGreece, tripToJapan)) }
     }
 }
