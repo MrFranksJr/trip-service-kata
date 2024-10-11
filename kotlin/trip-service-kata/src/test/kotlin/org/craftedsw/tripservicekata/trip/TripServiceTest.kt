@@ -15,6 +15,9 @@ class TripServiceTest() {
     private var friendUser: User = User()
     private val loggedInUser: User = User()
     private val anotherUser: User = User()
+    private val tripToGreece = Trip()
+    private val tripToJapan = Trip()
+    private val tripList: List<Trip> = listOf(tripToGreece, tripToJapan)
 
     @Before
     fun init() {
@@ -43,5 +46,20 @@ class TripServiceTest() {
         friendUser.addTrip(Trip())
 
         assert(tripService.getTripsByUser(friendUser).isEmpty())
+    }
+
+    @Test
+    fun `should return all trips when users are friends`() {
+        mockkObject(UserSession)
+        mockkObject(TripDAO)
+        every { UserSession.instance.loggedUser } returns loggedInUser
+        every { TripDAO.findTripsByUser(any()) } returns tripList
+
+        friendUser.addFriend(loggedInUser)
+        friendUser.addTrip(tripToJapan)
+        friendUser.addTrip(tripToGreece)
+
+        assert(tripService.getTripsByUser(friendUser).size == tripList.size)
+        assert(tripService.getTripsByUser(friendUser).containsAll(tripList))
     }
 }
