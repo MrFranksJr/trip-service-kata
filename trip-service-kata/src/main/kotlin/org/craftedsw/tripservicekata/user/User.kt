@@ -11,6 +11,7 @@ class User private constructor(
 
     fun addFriend(user: User) = _friends.add(user)
     fun addTrip(trip: Trip) = _trips.add(trip)
+    fun isFriendsWith(otherUser: User): Boolean = _friends.contains(otherUser)
 
     class Builder {
         private val friends: MutableList<User> = mutableListOf()
